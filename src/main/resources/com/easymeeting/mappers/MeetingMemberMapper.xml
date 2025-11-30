@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.easymeeting.mappers.MeetingMemberMapper">
+
+    <resultMap id="MeetingMemberResultMap" type="com.easymeeting.entity.po.MeetingMember">
+        <result column="meeting_id" property="meetingId"/>
+        <result column="user_id" property="userId"/>
+        <result column="nick_name" property="nickName"/>
+        <result column="last_join_time" property="lastJoinTime"/>
+        <result column="status" property="status"/>
+        <result column="member_type" property="memberType"/>
+        <result column="meeting_status" property="meetingStatus"/>
+    </resultMap>
+
+
+
+    <sql id="whereCondition">
+        <where>
+            <if test="meetingId != null and meetingId != ''">and meeting_id = #{meetingId}</if>
+            <if test="userId != null and userId != ''">and user_id = #{userId}</if>
+            <if test="nickName != null and nickName != ''">and nick_name like concat('%',#{nickName},'%')</if>
+            <if test="status != null">and status = #{status}</if>
+            <if test="memberType != null">and member_type = #{memberType}</if>
+            <if test="meetingStatus != null">and meeting_status = #{meetingStatus}</if>
+            <if test="lastJoinTimeStart != null">and last_join_time &gt;= #{lastJoinTimeStart}</if>
+            <if test="lastJoinTimeEnd != null">and last_join_time &lt;= #{lastJoinTimeEnd}</if>
+        </where>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="orderBy != null and orderBy != ''">
+            order by ${orderBy} ${orderDirection}
+        </if>
+        <if test="orderBy == null or orderBy == ''">
+            order by last_join_time desc
+        </if>
+    </sql>
+
+    <select id="selectListByParam" parameterType="com.easymeeting.entity.query.MeetingMemberQuery" resultMap="MeetingMemberResultMap">
+        select meeting_id, user_id, nick_name, last_join_time, status, member_type, meeting_status from meeting_member
+        <include refid="whereCondition"/>
+        <include refid="orderBy"/>
+        <if test="simplePage != null">limit #{simplePage.start}, #{simplePage.end}</if>
+    </select>
+
+    <select id="selectCountByParam" parameterType="com.easymeeting.entity.query.MeetingMemberQuery" resultType="java.lang.Integer">
+        select count(1) from meeting_member
+        <include refid="whereCondition"/>
+    </select>
+
+    <insert id="insert" parameterType="com.easymeeting.entity.po.MeetingMember">
+        insert into meeting_member (
+            meeting_id, user_id, nick_name, last_join_time, status, member_type, meeting_status
+        ) values (
+            #{meetingId}, #{userId}, #{nickName}, #{lastJoinTime}, #{status}, #{memberType}, #{meetingStatus}
+        )
+    </insert>
+
+    <insert id="insertBatch" parameterType="java.util.List">
+        insert into meeting_member (
+            meeting_id, user_id, nick_name, last_join_time, status, member_type, meeting_status
+        ) values
+        <foreach collection="list" item="item" separator=",">
+            (#{item.meetingId}, #{item.userId}, #{item.nickName}, #{item.lastJoinTime}, #{item.status}, #{item.memberType}, #{item.meetingStatus})
+        </foreach>
+    </insert>
+
+    <insert id="insertOrUpdateBatch" parameterType="java.util.List">
+        insert into meeting_member (
+            meeting_id, user_id, nick_name, last_join_time, status, member_type, meeting_status
+        ) values
+        <foreach collection="list" item="item" separator=",">
+            (#{item.meetingId}, #{item.userId}, #{item.nickName}, #{item.lastJoinTime}, #{item.status}, #{item.memberType}, #{item.meetingStatus})
+        </foreach>
+        on duplicate key update
+        nick_name = values(nick_name),
+        last_join_time = values(last_join_time),
+        status = values(status),
+        member_type = values(member_type),
+        meeting_status = values(meeting_status)
+    </insert>
+
+    <insert id="insertOrUpdate" parameterType="com.easymeeting.entity.po.MeetingMember">
+        insert into meeting_member (
+            meeting_id, user_id, nick_name, last_join_time, status, member_type, meeting_status
+        ) values (
+            #{meetingId}, #{userId}, #{nickName}, #{lastJoinTime}, #{status}, #{memberType}, #{meetingStatus}
+        )
+        on duplicate key update
+            nick_name = values(nick_name),
+            last_join_time = values(last_join_time),
+            status = values(status),
+            member_type = values(member_type),
+            meeting_status = values(meeting_status)
+    </insert>
+
+    <update id="updateByParam">
+        update meeting_member
+        <set>
+            <if test="bean.nickName != null and bean.nickName != ''">nick_name = #{bean.nickName},</if>
+            <if test="bean.lastJoinTime != null">last_join_time = #{bean.lastJoinTime},</if>
+            <if test="bean.status != null">status = #{bean.status},</if>
+            <if test="bean.memberType != null">member_type = #{bean.memberType},</if>
+            <if test="bean.meetingStatus != null">meeting_status = #{bean.meetingStatus},</if>
+        </set>
+        <include refid="whereCondition"/>
+    </update>
+
+    <delete id="deleteByParam" parameterType="com.easymeeting.entity.query.MeetingMemberQuery">
+        <if test="meetingId != null or userId != null or status != null or memberType != null or meetingStatus != null">
+            delete from meeting_member
+            <include refid="whereCondition"/>
+        </if>
+    </delete>
+
+</mapper>
+
+

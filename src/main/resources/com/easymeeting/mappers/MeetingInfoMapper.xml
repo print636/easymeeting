@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.easymeeting.mappers.MeetingInfoMapper">
+
+    <resultMap id="MeetingInfoResultMap" type="com.easymeeting.entity.po.MeetingInfo">
+        <id column="meeting_id" property="meetingId"/>
+        <result column="meeting_no" property="meetingNo"/>
+        <result column="meeting_name" property="meetingName"/>
+        <result column="create_time" property="createTime"/>
+        <result column="create_user_id" property="createUserId"/>
+        <result column="join_type" property="joinType"/>
+        <result column="join_password" property="joinPassword"/>
+        <result column="start_time" property="startTime"/>
+        <result column="end_time" property="endTime"/>
+        <result column="status" property="status"/>
+    </resultMap>
+
+
+    <sql id="whereCondition">
+        <where>
+            <if test="meetingId != null and meetingId != ''">and meeting_id = #{meetingId}</if>
+            <if test="meetingNo != null and meetingNo != ''">and meeting_no = #{meetingNo}</if>
+            <if test="meetingName != null and meetingName != ''">and meeting_name like concat('%',#{meetingName},'%')</if>
+            <if test="createUserId != null and createUserId != ''">and create_user_id = #{createUserId}</if>
+            <if test="joinType != null">and join_type = #{joinType}</if>
+            <if test="status != null">and status = #{status}</if>
+            <if test="createTimeStart != null">and create_time &gt;= #{createTimeStart}</if>
+            <if test="createTimeEnd != null">and create_time &lt;= #{createTimeEnd}</if>
+            <if test="startTimeStart != null">and start_time &gt;= #{startTimeStart}</if>
+            <if test="startTimeEnd != null">and start_time &lt;= #{startTimeEnd}</if>
+            <if test="userId != null and userId != ''">
+                and meeting_id in (select meeting_id from meeting_member where user_id = #{userId} and status = 1)
+            </if>
+        </where>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="orderBy != null and orderBy != ''">
+            order by ${orderBy} ${orderDirection}
+        </if>
+        <if test="orderBy == null or orderBy == ''">
+            order by create_time desc
+        </if>
+    </sql>
+
+    <select id="selectByMeetingId" parameterType="string" resultMap="MeetingInfoResultMap">
+        select meeting_id, meeting_no, meeting_name, create_time, create_user_id, join_type, join_password, start_time, end_time, status from meeting_info
+        where meeting_id = #{meetingId}
+        limit 1
+    </select>
+
+    <select id="selectListByParam" parameterType="com.easymeeting.entity.query.MeetingInfoQuery" resultMap="MeetingInfoResultMap">
+        select meeting_id, meeting_no, meeting_name, create_time, create_user_id, join_type, join_password, start_time, end_time, status
+        <if test="queryMemberCount">
+            , (select count(1) from meeting_member where meeting_id = meeting_info.meeting_id) memberCount
+        </if>
+        from meeting_info
+        <include refid="whereCondition"/>
+        <include refid="orderBy"/>
+        <if test="simplePage != null">limit #{simplePage.start}, #{simplePage.end}</if>
+    </select>
+
+    <select id="selectCountByParam" parameterType="com.easymeeting.entity.query.MeetingInfoQuery" resultType="java.lang.Integer">
+        select count(1) from meeting_info
+        <include refid="whereCondition"/>
+    </select>
+
+    <insert id="insert" parameterType="com.easymeeting.entity.po.MeetingInfo">
+        insert into meeting_info (
+            meeting_id, meeting_no, meeting_name, create_time, create_user_id, join_type, join_password, start_time, end_time, status
+        ) values (
+            #{meetingId}, #{meetingNo}, #{meetingName}, #{createTime}, #{createUserId}, #{joinType}, #{joinPassword}, #{startTime}, #{endTime}, #{status}
+        )
+    </insert>
+
+    <insert id="insertBatch" parameterType="java.util.List">
+        insert into meeting_info (
+            meeting_id, meeting_no, meeting_name, create_time, create_user_id, join_type, join_password, start_time, end_time, status
+        ) values
+        <foreach collection="list" item="item" separator=",">
+            (#{item.meetingId}, #{item.meetingNo}, #{item.meetingName}, #{item.createTime}, #{item.createUserId}, #{item.joinType}, #{item.joinPassword}, #{item.startTime}, #{item.endTime}, #{item.status})
+        </foreach>
+    </insert>
+
+    <insert id="insertOrUpdateBatch" parameterType="java.util.List">
+        insert into meeting_info (
+            meeting_id, meeting_no, meeting_name, create_time, create_user_id, join_type, join_password, start_time, end_time, status
+        ) values
+        <foreach collection="list" item="item" separator=",">
+            (#{item.meetingId}, #{item.meetingNo}, #{item.meetingName}, #{item.createTime}, #{item.createUserId}, #{item.joinType}, #{item.joinPassword}, #{item.startTime}, #{item.endTime}, #{item.status})
+        </foreach>
+        on duplicate key update
+        meeting_no = values(meeting_no),
+        meeting_name = values(meeting_name),
+        create_time = values(create_time),
+        create_user_id = values(create_user_id),
+        join_type = values(join_type),
+        join_password = values(join_password),
+        start_time = values(start_time),
+        end_time = values(end_time),
+        status = values(status)
+    </insert>
+
+    <insert id="insertOrUpdate" parameterType="com.easymeeting.entity.po.MeetingInfo">
+        insert into meeting_info (
+            meeting_id, meeting_no, meeting_name, create_time, create_user_id, join_type, join_password, start_time, end_time, status
+        ) values (
+            #{meetingId}, #{meetingNo}, #{meetingName}, #{createTime}, #{createUserId}, #{joinType}, #{joinPassword}, #{startTime}, #{endTime}, #{status}
+        )
+        on duplicate key update
+            meeting_no = values(meeting_no),
+            meeting_name = values(meeting_name),
+            create_time = values(create_time),
+            create_user_id = values(create_userId),
+            join_type = values(join_type),
+            join_password = values(join_password),
+            start_time = values(start_time),
+            end_time = values(end_time),
+            status = values(status)
+    </insert>
+
+    <update id="updateByParam">
+        update meeting_info
+        <set>
+            <if test="bean.meetingNo != null and bean.meetingNo != ''">meeting_no = #{bean.meetingNo},</if>
+            <if test="bean.meetingName != null and bean.meetingName != ''">meeting_name = #{bean.meetingName},</if>
+            <if test="bean.createTime != null">create_time = #{bean.createTime},</if>
+            <if test="bean.createUserId != null and bean.createUserId != ''">create_user_id = #{bean.createUserId},</if>
+            <if test="bean.joinType != null">join_type = #{bean.joinType},</if>
+            <if test="bean.joinPassword != null">join_password = #{bean.joinPassword},</if>
+            <if test="bean.startTime != null">start_time = #{bean.startTime},</if>
+            <if test="bean.endTime != null">end_time = #{bean.endTime},</if>
+            <if test="bean.status != null">status = #{bean.status},</if>
+        </set>
+        <include refid="whereCondition"/>
+    </update>
+
+    <update id="updateByMeetingId">
+        update meeting_info
+        <set>
+            <if test="bean.meetingNo != null and bean.meetingNo != ''">meeting_no = #{bean.meetingNo},</if>
+            <if test="bean.meetingName != null and bean.meetingName != ''">meeting_name = #{bean.meetingName},</if>
+            <if test="bean.createTime != null">create_time = #{bean.createTime},</if>
+            <if test="bean.createUserId != null and bean.createUserId != ''">create_user_id = #{bean.createUserId},</if>
+            <if test="bean.joinType != null">join_type = #{bean.joinType},</if>
+            <if test="bean.joinPassword != null">join_password = #{bean.joinPassword},</if>
+            <if test="bean.startTime != null">start_time = #{bean.startTime},</if>
+            <if test="bean.endTime != null">end_time = #{bean.endTime},</if>
+            <if test="bean.status != null">status = #{bean.status},</if>
+        </set>
+        where meeting_id = #{meetingId}
+    </update>
+
+    <delete id="deleteByParam" parameterType="com.easymeeting.entity.query.MeetingInfoQuery">
+        delete from meeting_info
+        <include refid="whereCondition"/>
+    </delete>
+
+    <delete id="deleteByMeetingId" parameterType="string">
+        delete from meeting_info where meeting_id = #{meetingId}
+    </delete>
+
+</mapper>
+
+

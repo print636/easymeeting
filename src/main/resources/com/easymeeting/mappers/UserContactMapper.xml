@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.easymeeting.mappers.UserContactMapper">
+
+    <resultMap id="UserContactResultMap" type="com.easymeeting.entity.po.UserContact">
+        <id column="user_id" property="userId"/>
+        <id column="contact_id" property="contactId"/>
+        <result column="status" property="status"/>
+        <result column="last_update_time" property="lastUpdateTime"/>
+        <result column="nick_name" property="nickName"/>
+        <result column="last_login_time" property="lastLoginTime"/>
+        <result column="last_off_time" property="lastOffTime"/>
+    </resultMap>
+
+    <sql id="whereCondition">
+        <where>
+            <if test="userId != null and userId != ''">and user_contact.user_id = #{userId}</if>
+            <if test="contactId != null and contactId != ''">and user_contact.contact_id = #{contactId}</if>
+            <if test="status != null">and user_contact.status = #{status}</if>
+            <if test="lastUpdateTimeStart != null">and user_contact.last_update_time &gt;= #{lastUpdateTimeStart}</if>
+            <if test="lastUpdateTimeEnd != null">and user_contact.last_update_time &lt;= #{lastUpdateTimeEnd}</if>
+        </where>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="orderBy != null and orderBy != ''">
+            order by 
+            <choose>
+                <when test="orderBy == 'last_update_time'">user_contact.last_update_time</when>
+                <otherwise>user_contact.${orderBy}</otherwise>
+            </choose>
+            ${orderDirection}
+        </if>
+        <if test="orderBy == null or orderBy == ''">
+            order by user_contact.last_update_time desc
+        </if>
+    </sql>
+
+    <select id="selectByUserIdAndContactId" resultMap="UserContactResultMap">
+        select user_contact.user_id, user_contact.contact_id, user_contact.status, user_contact.last_update_time,
+               user_info.nick_name, user_info.last_login_time, user_info.last_off_time
+        from user_contact
+        left join user_info on user_contact.contact_id = user_info.user_id
+        where user_contact.user_id = #{userId} and user_contact.contact_id = #{contactId}
+        limit 1
+    </select>
+
+    <select id="selectListByParam" parameterType="com.easymeeting.entity.query.UserContactQuery" resultMap="UserContactResultMap">
+        select user_contact.user_id, user_contact.contact_id, user_contact.status, user_contact.last_update_time
+        <if test="queryUserInfo != null and queryUserInfo == true">
+            , user_info.nick_name, user_info.last_login_time, user_info.last_off_time
+        </if>
+        <if test="queryUserInfo == null or queryUserInfo == false">
+            , null as nick_name, null as last_login_time, null as last_off_time
+        </if>
+        from user_contact
+        <if test="queryUserInfo != null and queryUserInfo == true">
+            left join user_info on user_contact.contact_id = user_info.user_id
+        </if>
+        <include refid="whereCondition"/>
+        <include refid="orderBy"/>
+        <if test="simplePage != null">limit #{simplePage.start}, #{simplePage.end}</if>
+    </select>
+
+    <select id="selectCountByParam" parameterType="com.easymeeting.entity.query.UserContactQuery" resultType="java.lang.Integer">
+        select count(1) from user_contact
+        <if test="queryUserInfo != null and queryUserInfo == true">
+            left join user_info on user_contact.contact_id = user_info.user_id
+        </if>
+        <include refid="whereCondition"/>
+    </select>
+
+    <insert id="insert" parameterType="com.easymeeting.entity.po.UserContact">
+        insert into user_contact (
+            user_id, contact_id, status, last_update_time
+        ) values (
+            #{userId}, #{contactId}, #{status}, #{lastUpdateTime}
+        )
+    </insert>
+
+    <insert id="insertBatch" parameterType="java.util.List">
+        insert into user_contact (
+            user_id, contact_id, status, last_update_time
+        ) values
+        <foreach collection="list" item="item" separator=",">
+            (#{item.userId}, #{item.contactId}, #{item.status}, #{item.lastUpdateTime})
+        </foreach>
+    </insert>
+
+    <insert id="insertOrUpdateBatch" parameterType="java.util.List">
+        insert into user_contact (
+            user_id, contact_id, status, last_update_time
+        ) values
+        <foreach collection="list" item="item" separator=",">
+            (#{item.userId}, #{item.contactId}, #{item.status}, #{item.lastUpdateTime})
+        </foreach>
+        on duplicate key update
+        status = values(status),
+        last_update_time = values(last_update_time)
+    </insert>
+
+    <insert id="insertOrUpdate" parameterType="com.easymeeting.entity.po.UserContact">
+        insert into user_contact (
+            user_id, contact_id, status, last_update_time
+        ) values (
+            #{userId}, #{contactId}, #{status}, #{lastUpdateTime}
+        )
+        on duplicate key update
+            status = values(status),
+            last_update_time = values(last_update_time)
+    </insert>
+
+    <update id="updateByParam">
+        update user_contact
+        <set>
+            <if test="bean.status != null">status = #{bean.status},</if>
+            <if test="bean.lastUpdateTime != null">last_update_time = #{bean.lastUpdateTime},</if>
+        </set>
+        <include refid="whereCondition"/>
+    </update>
+
+    <update id="updateByUserIdAndContactId">
+        update user_contact
+        <set>
+            <if test="bean.status != null">status = #{bean.status},</if>
+            <if test="bean.lastUpdateTime != null">last_update_time = #{bean.lastUpdateTime},</if>
+        </set>
+        where user_id = #{userId} and contact_id = #{contactId}
+    </update>
+
+    <delete id="deleteByParam" parameterType="com.easymeeting.entity.query.UserContactQuery">
+        delete from user_contact
+        <include refid="whereCondition"/>
+    </delete>
+
+    <delete id="deleteByUserIdAndContactId">
+        delete from user_contact where user_id = #{userId} and contact_id = #{contactId}
+    </delete>
+
+</mapper>
+
+
+

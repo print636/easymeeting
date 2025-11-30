@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.easymeeting.mappers.UserInfoMapper">
+
+    <resultMap id="UserInfoResultMap" type="com.easymeeting.entity.po.UserInfo">
+        <id column="user_id" property="userId"/>
+        <result column="email" property="email"/>
+        <result column="nick_name" property="nickName"/>
+        <result column="sex" property="sex"/>
+        <result column="password" property="password"/>
+        <result column="status" property="status"/>
+        <result column="create_time" property="createTime"/>
+        <result column="last_login_time" property="lastLoginTime"/>
+        <result column="last_off_time" property="lastOffTime"/>
+        <result column="meeting_no" property="meetingNo"/>
+    </resultMap>
+
+    <!-- 移除列片段，直接在语句中显式列出，避免某些解析器问题 -->
+
+    <!-- 通用查询条件 -->
+    <sql id="queryUserInfoCondition">
+        <where>
+            <if test="userId != null and userId != ''">
+                and user_id = #{userId}
+            </if>
+            <if test="email != null and email != ''">
+                and email = #{email}
+            </if>
+            <if test="nickName != null and nickName != ''">
+                and nick_name like concat('%', #{nickName}, '%')
+            </if>
+            <if test="sex != null">
+                and sex = #{sex}
+            </if>
+            <if test="status != null">
+                and status = #{status}
+            </if>
+            <if test="createTimeStart != null">
+                and create_time >= #{createTimeStart}
+            </if>
+            <if test="createTimeEnd != null">
+                and create_time &lt;= #{createTimeEnd}
+            </if>
+            <if test="lastLoginTimeStart != null">
+                and last_login_time >= #{lastLoginTimeStart}
+            </if>
+            <if test="lastLoginTimeEnd != null">
+                and last_login_time &lt;= #{lastLoginTimeEnd}
+            </if>
+            <if test="meetingNo != null and meetingNo != ''">
+                and meeting_no = #{meetingNo}
+            </if>
+        </where>
+    </sql>
+
+    <!-- 通用排序条件 -->
+    <sql id="orderByCondition">
+        <if test="orderBy != null and orderBy != ''">
+            order by ${orderBy}
+            <if test="orderDirection != null and orderDirection != ''">
+                ${orderDirection}
+            </if>
+        </if>
+        <if test="orderBy == null or orderBy == ''">
+            order by create_time desc
+        </if>
+    </sql>
+
+    <!-- 根据邮箱查询 -->
+    <select id="selectByEmail" parameterType="string" resultMap="UserInfoResultMap">
+        select user_id, email, nick_name, sex, password, status, create_time, last_login_time, last_off_time, meeting_no from user_info
+        where email = #{email}
+        limit 1
+    </select>
+
+    <!-- 根据用户ID查询 -->
+    <select id="selectByUserId" parameterType="string" resultMap="UserInfoResultMap">
+        select user_id, email, nick_name, sex, password, status, create_time, last_login_time, last_off_time, meeting_no from user_info
+        where user_id = #{userId}
+        limit 1
+    </select>
+
+    <!-- 根据条件查询列表 -->
+    <select id="selectListByParam" parameterType="com.easymeeting.entity.query.UserInfoQuery" resultMap="UserInfoResultMap">
+        select user_id, email, nick_name, sex, password, status, create_time, last_login_time, last_off_time, meeting_no from user_info
+        <include refid="queryUserInfoCondition"/>
+        <include refid="orderByCondition"/>
+        <if test="simplePage != null">
+            limit #{simplePage.start}, #{simplePage.end}
+        </if>
+    </select>
+
+    <!-- 根据条件查询总数 -->
+    <select id="selectCountByParam" parameterType="com.easymeeting.entity.query.UserInfoQuery" resultType="java.lang.Integer">
+        select count(1) from user_info
+        <include refid="queryUserInfoCondition"/>
+    </select>
+
+    <!-- 插入单条记录 -->
+    <insert id="insert" parameterType="com.easymeeting.entity.po.UserInfo">
+        insert into user_info
+        (user_id, email, nick_name, sex, password, status, create_time, last_login_time, last_off_time, meeting_no)
+        values
+        (#{userId}, #{email}, #{nickName}, #{sex}, #{password}, #{status}, #{createTime}, #{lastLoginTime}, #{lastOffTime}, #{meetingNo})
+    </insert>
+
+    <!-- 批量插入 -->
+    <insert id="insertBatch" parameterType="java.util.List">
+        insert into user_info
+        (user_id, email, nick_name, sex, password, status, create_time, last_login_time, last_off_time, meeting_no)
+        values
+        <foreach collection="list" item="item" separator=",">
+            (#{item.userId}, #{item.email}, #{item.nickName}, #{item.sex}, #{item.password}, #{item.status}, #{item.createTime}, #{item.lastLoginTime}, #{item.lastOffTime}, #{item.meetingNo})
+        </foreach>
+    </insert>
+
+    <!-- 批量插入或更新 -->
+    <insert id="insertOrUpdateBatch" parameterType="java.util.List">
+        insert into user_info
+        (user_id, email, nick_name, sex, password, status, create_time, last_login_time, last_off_time, meeting_no)
+        values
+        <foreach collection="list" item="item" separator=",">
+            (#{item.userId}, #{item.email}, #{item.nickName}, #{item.sex}, #{item.password}, #{item.status}, #{item.createTime}, #{item.lastLoginTime}, #{item.lastOffTime}, #{item.meetingNo})
+        </foreach>
+        on duplicate key update
+        email = values(email),
+        nick_name = values(nick_name),
+        sex = values(sex),
+        password = values(password),
+        status = values(status),
+        last_login_time = values(last_login_time),
+        last_off_time = values(last_off_time),
+        meeting_no = values(meeting_no)
+    </insert>
+
+    <!-- 插入单条记录或更新 -->
+    <insert id="insertOrUpdate" parameterType="com.easymeeting.entity.po.UserInfo">
+        insert into user_info (
+            user_id, email, nick_name, sex, password, status, create_time, last_login_time, last_off_time, meeting_no
+        ) values (
+            #{userId}, #{email}, #{nickName}, #{sex}, #{password}, #{status}, #{createTime}, #{lastLoginTime}, #{lastOffTime}, #{meetingNo}
+        )
+        on duplicate key update
+            email = values(email),
+            nick_name = values(nick_name),
+            sex = values(sex),
+            password = values(password),
+            status = values(status),
+            last_login_time = values(last_login_time),
+            last_off_time = values(last_off_time),
+            meeting_no = values(meeting_no)
+    </insert>
+
+    <!-- 根据条件更新 -->
+    <update id="updateByParam">
+        update user_info
+        <set>
+            <if test="bean.email != null and bean.email != ''">
+                email = #{bean.email},
+            </if>
+            <if test="bean.nickName != null and bean.nickName != ''">
+                nick_name = #{bean.nickName},
+            </if>
+            <if test="bean.sex != null">
+                sex = #{bean.sex},
+            </if>
+            <if test="bean.password != null and bean.password != ''">
+                password = #{bean.password},
+            </if>
+            <if test="bean.status != null">
+                status = #{bean.status},
+            </if>
+            <if test="bean.lastLoginTime != null">
+                last_login_time = #{bean.lastLoginTime},
+            </if>
+            <if test="bean.lastOffTime != null">
+                last_off_time = #{bean.lastOffTime},
+            </if>
+            <if test="bean.meetingNo != null and bean.meetingNo != ''">
+                meeting_no = #{bean.meetingNo},
+            </if>
+        </set>
+        <include refid="queryUserInfoCondition"/>
+    </update>
+
+    <!-- 根据用户ID更新 -->
+    <update id="updateByUserId">
+        update user_info
+        <set>
+            <if test="bean.email != null and bean.email != ''">
+                email = #{bean.email},
+            </if>
+            <if test="bean.nickName != null and bean.nickName != ''">
+                nick_name = #{bean.nickName},
+            </if>
+            <if test="bean.sex != null">
+                sex = #{bean.sex},
+            </if>
+            <if test="bean.password != null and bean.password != ''">
+                password = #{bean.password},
+            </if>
+            <if test="bean.status != null">
+                status = #{bean.status},
+            </if>
+            <if test="bean.lastLoginTime != null">
+                last_login_time = #{bean.lastLoginTime},
+            </if>
+            <if test="bean.lastOffTime != null">
+                last_off_time = #{bean.lastOffTime},
+            </if>
+            <if test="bean.meetingNo != null and bean.meetingNo != ''">
+                meeting_no = #{bean.meetingNo},
+            </if>
+        </set>
+        where user_id = #{userId}
+    </update>
+
+    <!-- 根据邮箱更新 -->
+    <update id="updateByEmail">
+        update user_info
+        <set>
+            <if test="bean.userId != null and bean.userId != ''">
+                user_id = #{bean.userId},
+            </if>
+            <if test="bean.nickName != null and bean.nickName != ''">
+                nick_name = #{bean.nickName},
+            </if>
+            <if test="bean.sex != null">
+                sex = #{bean.sex},
+            </if>
+            <if test="bean.password != null and bean.password != ''">
+                password = #{bean.password},
+            </if>
+            <if test="bean.status != null">
+                status = #{bean.status},
+            </if>
+            <if test="bean.lastLoginTime != null">
+                last_login_time = #{bean.lastLoginTime},
+            </if>
+            <if test="bean.lastOffTime != null">
+                last_off_time = #{bean.lastOffTime},
+            </if>
+            <if test="bean.meetingNo != null and bean.meetingNo != ''">
+                meeting_no = #{bean.meetingNo},
+            </if>
+        </set>
+        where email = #{email}
+    </update>
+
+    <!-- 根据条件删除 -->
+    <delete id="deleteByParam" parameterType="com.easymeeting.entity.query.UserInfoQuery">
+        delete from user_info
+        <include refid="queryUserInfoCondition"/>
+    </delete>
+
+    <!-- 根据用户ID删除 -->
+    <delete id="deleteByUserId" parameterType="string">
+        delete from user_info where user_id = #{userId}
+    </delete>
+
+    <!-- 根据邮箱删除 -->
+    <delete id="deleteByEmail" parameterType="string">
+        delete from user_info where email = #{email}
+    </delete>
+
+</mapper>
+

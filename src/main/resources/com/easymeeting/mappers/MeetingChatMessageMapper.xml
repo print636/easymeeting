@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.easymeeting.mappers.MeetingChatMessageMapper">
+
+    <resultMap id="MeetingChatMessageResultMap" type="com.easymeeting.entity.po.MeetingChatMessage">
+        <id column="message_id" property="messageId"/>
+        <result column="meeting_id" property="meetingId"/>
+        <result column="message_type" property="messageType"/>
+        <result column="message_content" property="messageContent"/>
+        <result column="send_user_id" property="sendUserId"/>
+        <result column="send_user_nick_name" property="sendUserNickName"/>
+        <result column="send_time" property="sendTime"/>
+        <result column="receive_type" property="receiveType"/>
+        <result column="receive_user_id" property="receiveUserId"/>
+        <result column="file_size" property="fileSize"/>
+        <result column="file_name" property="fileName"/>
+        <result column="file_type" property="fileType"/>
+        <result column="file_suffix" property="fileSuffix"/>
+        <result column="status" property="status"/>
+    </resultMap>
+
+    <sql id="whereCondition">
+        <where>
+            <if test="param.messageId != null">
+                and message_id = #{param.messageId}
+            </if>
+            <if test="param.maxMessageId != null">
+                and message_id &lt;= #{param.maxMessageId}
+            </if>
+            <if test="param.meetingId != null and param.meetingId != ''">and meeting_id = #{param.meetingId}</if>
+            <if test="param.messageType != null">and message_type = #{param.messageType}</if>
+            <if test="param.messageContent != null and param.messageContent != ''">and message_content like concat('%',#{param.messageContent},'%')</if>
+            <if test="param.sendUserId != null and param.sendUserId != ''">and send_user_id = #{param.sendUserId}</if>
+            <if test="param.sendUserNickName != null and param.sendUserNickName != ''">and send_user_nick_name like concat('%',#{param.sendUserNickName},'%')</if>
+            <if test="param.sendTimeStart != null">and send_time &gt;= #{param.sendTimeStart}</if>
+            <if test="param.sendTimeEnd != null">and send_time &lt;= #{param.sendTimeEnd}</if>
+            <choose>
+                <when test="param.userId != null and param.userId != ''">
+                    and (
+                        receive_type = 0
+                        or (receive_type = 1 and receive_user_id = #{param.userId})
+                    )
+                </when>
+                <when test="param.receiveType != null">
+                    and receive_type = #{param.receiveType}
+                    <if test="param.receiveType == 1 and param.receiveUserId != null and param.receiveUserId != ''">
+                        and receive_user_id = #{param.receiveUserId}
+                    </if>
+                </when>
+            </choose>
+            <if test="param.receiveUserId != null and param.receiveUserId != '' and (param.userId == null or param.userId == '') and (param.receiveType == null or param.receiveType != 1)">
+                and receive_user_id = #{param.receiveUserId}
+            </if>
+            <if test="param.fileSize != null">and file_size = #{param.fileSize}</if>
+            <if test="param.fileName != null and param.fileName != ''">and file_name like concat('%',#{param.fileName},'%')</if>
+            <if test="param.fileType != null">and file_type = #{param.fileType}</if>
+            <if test="param.fileSuffix != null and param.fileSuffix != ''">and file_suffix = #{param.fileSuffix}</if>
+            <if test="param.status != null">and status = #{param.status}</if>
+        </where>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="param.orderBy != null and param.orderBy != ''">
+            order by ${param.orderBy} ${param.orderDirection}
+        </if>
+        <if test="param.orderBy == null or param.orderBy == ''">
+            order by send_time desc
+        </if>
+    </sql>
+
+    <select id="selectByMessageId" resultMap="MeetingChatMessageResultMap">
+        select message_id, meeting_id, message_type, message_content, send_user_id, send_user_nick_name, 
+               send_time, receive_type, receive_user_id, file_size, file_name, file_type, file_suffix, status 
+        from ${tableName}
+        where message_id = #{messageId}
+        limit 1
+    </select>
+
+    <select id="selectListByParam" resultMap="MeetingChatMessageResultMap">
+        select message_id, meeting_id, message_type, message_content, send_user_id, send_user_nick_name, 
+               send_time, receive_type, receive_user_id, file_size, file_name, file_type, file_suffix, status 
+        from ${tableName}
+        <include refid="whereCondition"/>
+        <include refid="orderBy"/>
+        <if test="param.simplePage != null">limit #{param.simplePage.start}, #{param.simplePage.end}</if>
+    </select>
+
+    <select id="selectCountByParam" resultType="java.lang.Integer">
+        select count(1) from ${tableName}
+        <include refid="whereCondition"/>
+    </select>
+
+    <insert id="insert">
+        insert into ${tableName} (
+            message_id, meeting_id, message_type, message_content, send_user_id, send_user_nick_name, 
+            send_time, receive_type, receive_user_id, file_size, file_name, file_type, file_suffix, status
+        ) values (
+            #{bean.messageId}, #{bean.meetingId}, #{bean.messageType}, #{bean.messageContent}, #{bean.sendUserId}, 
+            #{bean.sendUserNickName}, #{bean.sendTime}, #{bean.receiveType}, #{bean.receiveUserId}, #{bean.fileSize}, 
+            #{bean.fileName}, #{bean.fileType}, #{bean.fileSuffix}, #{bean.status}
+        )
+    </insert>
+
+    <insert id="insertBatch">
+        insert into ${tableName} (
+            message_id, meeting_id, message_type, message_content, send_user_id, send_user_nick_name, 
+            send_time, receive_type, receive_user_id, file_size, file_name, file_type, file_suffix, status
+        ) values
+        <foreach collection="list" item="item" separator=",">
+            (#{item.messageId}, #{item.meetingId}, #{item.messageType}, #{item.messageContent}, #{item.sendUserId}, 
+             #{item.sendUserNickName}, #{item.sendTime}, #{item.receiveType}, #{item.receiveUserId}, #{item.fileSize}, 
+             #{item.fileName}, #{item.fileType}, #{item.fileSuffix}, #{item.status})
+        </foreach>
+    </insert>
+
+    <insert id="insertOrUpdateBatch">
+        insert into ${tableName} (
+            message_id, meeting_id, message_type, message_content, send_user_id, send_user_nick_name, 
+            send_time, receive_type, receive_user_id, file_size, file_name, file_type, file_suffix, status
+        ) values
+        <foreach collection="list" item="item" separator=",">
+            (#{item.messageId}, #{item.meetingId}, #{item.messageType}, #{item.messageContent}, #{item.sendUserId}, 
+             #{item.sendUserNickName}, #{item.sendTime}, #{item.receiveType}, #{item.receiveUserId}, #{item.fileSize}, 
+             #{item.fileName}, #{item.fileType}, #{item.fileSuffix}, #{item.status})
+        </foreach>
+        on duplicate key update
+        meeting_id = values(meeting_id),
+        message_type = values(message_type),
+        message_content = values(message_content),
+        send_user_id = values(send_user_id),
+        send_user_nick_name = values(send_user_nick_name),
+        send_time = values(send_time),
+        receive_type = values(receive_type),
+        receive_user_id = values(receive_user_id),
+        file_size = values(file_size),
+        file_name = values(file_name),
+        file_type = values(file_type),
+        file_suffix = values(file_suffix),
+        status = values(status)
+    </insert>
+
+    <insert id="insertOrUpdate">
+        insert into ${tableName} (
+            message_id, meeting_id, message_type, message_content, send_user_id, send_user_nick_name, 
+            send_time, receive_type, receive_user_id, file_size, file_name, file_type, file_suffix, status
+        ) values (
+            #{bean.messageId}, #{bean.meetingId}, #{bean.messageType}, #{bean.messageContent}, #{bean.sendUserId}, 
+            #{bean.sendUserNickName}, #{bean.sendTime}, #{bean.receiveType}, #{bean.receiveUserId}, #{bean.fileSize}, 
+            #{bean.fileName}, #{bean.fileType}, #{bean.fileSuffix}, #{bean.status}
+        )
+        on duplicate key update
+            meeting_id = values(meeting_id),
+            message_type = values(message_type),
+            message_content = values(message_content),
+            send_user_id = values(send_user_id),
+            send_user_nick_name = values(send_user_nick_name),
+            send_time = values(send_time),
+            receive_type = values(receive_type),
+            receive_user_id = values(receive_user_id),
+            file_size = values(file_size),
+            file_name = values(file_name),
+            file_type = values(file_type),
+            file_suffix = values(file_suffix),
+            status = values(status)
+    </insert>
+
+    <update id="updateByParam">
+        update ${tableName}
+        <set>
+            <if test="bean.meetingId != null and bean.meetingId != ''">meeting_id = #{bean.meetingId},</if>
+            <if test="bean.messageType != null">message_type = #{bean.messageType},</if>
+            <if test="bean.messageContent != null and bean.messageContent != ''">message_content = #{bean.messageContent},</if>
+            <if test="bean.sendUserId != null and bean.sendUserId != ''">send_user_id = #{bean.sendUserId},</if>
+            <if test="bean.sendUserNickName != null and bean.sendUserNickName != ''">send_user_nick_name = #{bean.sendUserNickName},</if>
+            <if test="bean.sendTime != null">send_time = #{bean.sendTime},</if>
+            <if test="bean.receiveType != null">receive_type = #{bean.receiveType},</if>
+            <if test="bean.receiveUserId != null and bean.receiveUserId != ''">receive_user_id = #{bean.receiveUserId},</if>
+            <if test="bean.fileSize != null">file_size = #{bean.fileSize},</if>
+            <if test="bean.fileName != null and bean.fileName != ''">file_name = #{bean.fileName},</if>
+            <if test="bean.fileType != null">file_type = #{bean.fileType},</if>
+            <if test="bean.fileSuffix != null and bean.fileSuffix != ''">file_suffix = #{bean.fileSuffix},</if>
+            <if test="bean.status != null">status = #{bean.status},</if>
+        </set>
+        <include refid="whereCondition"/>
+    </update>
+
+    <update id="updateByMessageId">
+        update ${tableName}
+        <set>
+            <if test="bean.meetingId != null and bean.meetingId != ''">meeting_id = #{bean.meetingId},</if>
+            <if test="bean.messageType != null">message_type = #{bean.messageType},</if>
+            <if test="bean.messageContent != null and bean.messageContent != ''">message_content = #{bean.messageContent},</if>
+            <if test="bean.sendUserId != null and bean.sendUserId != ''">send_user_id = #{bean.sendUserId},</if>
+            <if test="bean.sendUserNickName != null and bean.sendUserNickName != ''">send_user_nick_name = #{bean.sendUserNickName},</if>
+            <if test="bean.sendTime != null">send_time = #{bean.sendTime},</if>
+            <if test="bean.receiveType != null">receive_type = #{bean.receiveType},</if>
+            <if test="bean.receiveUserId != null and bean.receiveUserId != ''">receive_user_id = #{bean.receiveUserId},</if>
+            <if test="bean.fileSize != null">file_size = #{bean.fileSize},</if>
+            <if test="bean.fileName != null and bean.fileName != ''">file_name = #{bean.fileName},</if>
+            <if test="bean.fileType != null">file_type = #{bean.fileType},</if>
+            <if test="bean.fileSuffix != null and bean.fileSuffix != ''">file_suffix = #{bean.fileSuffix},</if>
+            <if test="bean.status != null">status = #{bean.status},</if>
+        </set>
+        where message_id = #{messageId}
+    </update>
+
+    <delete id="deleteByParam">
+        delete from ${tableName}
+        <include refid="whereCondition"/>
+    </delete>
+
+    <delete id="deleteByMessageId">
+        delete from ${tableName} where message_id = #{messageId}
+    </delete>
+
+</mapper>
+

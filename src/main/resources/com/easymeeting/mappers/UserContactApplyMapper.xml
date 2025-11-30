@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.easymeeting.mappers.UserContactApplyMapper">
+
+    <resultMap id="UserContactApplyResultMap" type="com.easymeeting.entity.po.UserContactApply">
+        <id column="apply_id" property="applyId"/>
+        <result column="apply_user_id" property="applyUserId"/>
+        <result column="receive_user_id" property="receiveUserId"/>
+        <result column="last_apply_time" property="lastApplyTime"/>
+        <result column="status" property="status"/>
+    </resultMap>
+
+    <sql id="whereCondition">
+        <where>
+            <if test="applyId != null">and user_contact_apply.apply_id = #{applyId}</if>
+            <if test="applyUserId != null and applyUserId != ''">and user_contact_apply.apply_user_id = #{applyUserId}</if>
+            <if test="receiveUserId != null and receiveUserId != ''">and user_contact_apply.receive_user_id = #{receiveUserId}</if>
+            <if test="lastApplyTimeStart != null">and user_contact_apply.last_apply_time &gt;= #{lastApplyTimeStart}</if>
+            <if test="lastApplyTimeEnd != null">and user_contact_apply.last_apply_time &lt;= #{lastApplyTimeEnd}</if>
+            <if test="status != null">and user_contact_apply.status = #{status}</if>
+        </where>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="orderBy != null and orderBy != ''">
+            order by 
+            <choose>
+                <when test="orderBy == 'last_apply_time'">user_contact_apply.last_apply_time</when>
+                <otherwise>user_contact_apply.${orderBy}</otherwise>
+            </choose>
+            ${orderDirection}
+        </if>
+        <if test="orderBy == null or orderBy == ''">
+            order by user_contact_apply.last_apply_time desc
+        </if>
+    </sql>
+
+    <select id="selectByApplyId" parameterType="java.lang.Integer" resultMap="UserContactApplyResultMap">
+        select apply_id, apply_user_id, receive_user_id, last_apply_time, status from user_contact_apply
+        where apply_id = #{applyId}
+        limit 1
+    </select>
+
+    <select id="selectByApplyUserIdAndReceiveUserId" resultMap="UserContactApplyResultMap">
+        select apply_id, apply_user_id, receive_user_id, last_apply_time, status from user_contact_apply
+        where apply_user_id = #{applyUserId} and receive_user_id = #{receiveUserId}
+        limit 1
+    </select>
+
+    <select id="selectListByParam" parameterType="com.easymeeting.entity.query.UserContactApplyQuery" resultMap="UserContactApplyResultMap">
+        select user_contact_apply.apply_id, user_contact_apply.apply_user_id, user_contact_apply.receive_user_id, 
+               user_contact_apply.last_apply_time, user_contact_apply.status
+        <if test="queryUserInfo != null and queryUserInfo == true">
+            , user_info.nick_name, user_info.last_login_time, user_info.last_off_time
+        </if>
+        <if test="queryUserInfo == null or queryUserInfo == false">
+            , null as nick_name, null as last_login_time, null as last_off_time
+        </if>
+        from user_contact_apply
+        <if test="queryUserInfo != null and queryUserInfo == true">
+            left join user_info on user_contact_apply.apply_user_id = user_info.user_id
+        </if>
+        <include refid="whereCondition"/>
+        <include refid="orderBy"/>
+        <if test="simplePage != null">limit #{simplePage.start}, #{simplePage.end}</if>
+    </select>
+
+    <select id="selectCountByParam" parameterType="com.easymeeting.entity.query.UserContactApplyQuery" resultType="java.lang.Integer">
+        select count(1) from user_contact_apply
+        <if test="queryUserInfo != null and queryUserInfo == true">
+            left join user_info on user_contact_apply.apply_user_id = user_info.user_id
+        </if>
+        <include refid="whereCondition"/>
+    </select>
+
+    <insert id="insert" parameterType="com.easymeeting.entity.po.UserContactApply" useGeneratedKeys="true" keyProperty="applyId">
+        insert into user_contact_apply (
+            apply_user_id, receive_user_id, last_apply_time, status
+        ) values (
+            #{applyUserId}, #{receiveUserId}, #{lastApplyTime}, #{status}
+        )
+    </insert>
+
+    <insert id="insertBatch" parameterType="java.util.List" useGeneratedKeys="true" keyProperty="applyId">
+        insert into user_contact_apply (
+            apply_user_id, receive_user_id, last_apply_time, status
+        ) values
+        <foreach collection="list" item="item" separator=",">
+            (#{item.applyUserId}, #{item.receiveUserId}, #{item.lastApplyTime}, #{item.status})
+        </foreach>
+    </insert>
+
+    <insert id="insertOrUpdateBatch" parameterType="java.util.List" useGeneratedKeys="true" keyProperty="applyId">
+        insert into user_contact_apply (
+            apply_user_id, receive_user_id, last_apply_time, status
+        ) values
+        <foreach collection="list" item="item" separator=",">
+            (#{item.applyUserId}, #{item.receiveUserId}, #{item.lastApplyTime}, #{item.status})
+        </foreach>
+        on duplicate key update
+        apply_user_id = values(apply_user_id),
+        receive_user_id = values(receive_user_id),
+        last_apply_time = values(last_apply_time),
+        status = values(status)
+    </insert>
+
+    <insert id="insertOrUpdate" parameterType="com.easymeeting.entity.po.UserContactApply" useGeneratedKeys="true" keyProperty="applyId">
+        insert into user_contact_apply (
+            apply_user_id, receive_user_id, last_apply_time, status
+        ) values (
+            #{applyUserId}, #{receiveUserId}, #{lastApplyTime}, #{status}
+        )
+        on duplicate key update
+            apply_user_id = values(apply_user_id),
+            receive_user_id = values(receive_user_id),
+            last_apply_time = values(last_apply_time),
+            status = values(status)
+    </insert>
+
+    <update id="updateByParam">
+        update user_contact_apply
+        <set>
+            <if test="bean.applyUserId != null and bean.applyUserId != ''">apply_user_id = #{bean.applyUserId},</if>
+            <if test="bean.receiveUserId != null and bean.receiveUserId != ''">receive_user_id = #{bean.receiveUserId},</if>
+            <if test="bean.lastApplyTime != null">last_apply_time = #{bean.lastApplyTime},</if>
+            <if test="bean.status != null">status = #{bean.status},</if>
+        </set>
+        <include refid="whereCondition"/>
+    </update>
+
+    <update id="updateByApplyId">
+        update user_contact_apply
+        <set>
+            <if test="bean.applyUserId != null and bean.applyUserId != ''">apply_user_id = #{bean.applyUserId},</if>
+            <if test="bean.receiveUserId != null and bean.receiveUserId != ''">receive_user_id = #{bean.receiveUserId},</if>
+            <if test="bean.lastApplyTime != null">last_apply_time = #{bean.lastApplyTime},</if>
+            <if test="bean.status != null">status = #{bean.status},</if>
+        </set>
+        where apply_id = #{applyId}
+    </update>
+
+    <update id="updateByApplyUserIdAndReceiveUserId">
+        update user_contact_apply
+        <set>
+            <if test="bean.applyUserId != null and bean.applyUserId != ''">apply_user_id = #{bean.applyUserId},</if>
+            <if test="bean.receiveUserId != null and bean.receiveUserId != ''">receive_user_id = #{bean.receiveUserId},</if>
+            <if test="bean.lastApplyTime != null">last_apply_time = #{bean.lastApplyTime},</if>
+            <if test="bean.status != null">status = #{bean.status},</if>
+        </set>
+        where apply_user_id = #{applyUserId} and receive_user_id = #{receiveUserId}
+    </update>
+
+    <delete id="deleteByParam" parameterType="com.easymeeting.entity.query.UserContactApplyQuery">
+        delete from user_contact_apply
+        <include refid="whereCondition"/>
+    </delete>
+
+    <delete id="deleteByApplyId" parameterType="java.lang.Integer">
+        delete from user_contact_apply where apply_id = #{applyId}
+    </delete>
+
+    <delete id="deleteByApplyUserIdAndReceiveUserId">
+        delete from user_contact_apply where apply_user_id = #{applyUserId} and receive_user_id = #{receiveUserId}
+    </delete>
+
+</mapper>
+

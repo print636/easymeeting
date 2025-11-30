@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.easymeeting.mappers.MeetingReserveMemberMapper">
+
+    <resultMap id="MeetingReserveMemberResultMap" type="com.easymeeting.entity.po.MeetingReserveMember">
+        <id column="meeting_id" property="meetingId"/>
+        <id column="invite_user_id" property="inviteUserId"/>
+    </resultMap>
+
+    <sql id="whereCondition">
+        <where>
+            <if test="meetingId != null and meetingId != ''">and meeting_id = #{meetingId}</if>
+            <if test="inviteUserId != null and inviteUserId != ''">and invite_user_id = #{inviteUserId}</if>
+        </where>
+    </sql>
+
+    <sql id="orderBy">
+        <if test="orderBy != null and orderBy != ''">
+            order by ${orderBy} ${orderDirection}
+        </if>
+        <if test="orderBy == null or orderBy == ''">
+            order by meeting_id desc
+        </if>
+    </sql>
+
+    <select id="selectListByParam" parameterType="com.easymeeting.entity.query.MeetingReserveMemberQuery" resultMap="MeetingReserveMemberResultMap">
+        select meeting_id, invite_user_id from meeting_reserve_member
+        <include refid="whereCondition"/>
+        <include refid="orderBy"/>
+        <if test="simplePage != null">limit #{simplePage.start}, #{simplePage.end}</if>
+    </select>
+
+    <select id="selectCountByParam" parameterType="com.easymeeting.entity.query.MeetingReserveMemberQuery" resultType="java.lang.Integer">
+        select count(1) from meeting_reserve_member
+        <include refid="whereCondition"/>
+    </select>
+
+    <select id="selectByMeetingIdAndInviteUserId" resultMap="MeetingReserveMemberResultMap">
+        select meeting_id, invite_user_id from meeting_reserve_member
+        where meeting_id = #{meetingId} and invite_user_id = #{inviteUserId}
+        limit 1
+    </select>
+
+    <insert id="insert" parameterType="com.easymeeting.entity.po.MeetingReserveMember">
+        insert into meeting_reserve_member (
+            meeting_id, invite_user_id
+        ) values (
+            #{meetingId}, #{inviteUserId}
+        )
+    </insert>
+
+    <insert id="insertBatch" parameterType="java.util.List">
+        insert into meeting_reserve_member (
+            meeting_id, invite_user_id
+        ) values
+        <foreach collection="list" item="item" separator=",">
+            (#{item.meetingId}, #{item.inviteUserId})
+        </foreach>
+    </insert>
+
+    <insert id="insertOrUpdateBatch" parameterType="java.util.List">
+        insert into meeting_reserve_member (
+            meeting_id, invite_user_id
+        ) values
+        <foreach collection="list" item="item" separator=",">
+            (#{item.meetingId}, #{item.inviteUserId})
+        </foreach>
+        on duplicate key update
+        meeting_id = values(meeting_id),
+        invite_user_id = values(invite_user_id)
+    </insert>
+
+    <insert id="insertOrUpdate" parameterType="com.easymeeting.entity.po.MeetingReserveMember">
+        insert into meeting_reserve_member (
+            meeting_id, invite_user_id
+        ) values (
+            #{meetingId}, #{inviteUserId}
+        )
+        on duplicate key update
+            meeting_id = values(meeting_id),
+            invite_user_id = values(invite_user_id)
+    </insert>
+
+    <update id="updateByParam">
+        update meeting_reserve_member
+        <set>
+            <if test="bean.meetingId != null and bean.meetingId != ''">meeting_id = #{bean.meetingId},</if>
+            <if test="bean.inviteUserId != null and bean.inviteUserId != ''">invite_user_id = #{bean.inviteUserId},</if>
+        </set>
+        <include refid="whereCondition"/>
+    </update>
+
+    <delete id="deleteByParam" parameterType="com.easymeeting.entity.query.MeetingReserveMemberQuery">
+        delete from meeting_reserve_member
+        <include refid="whereCondition"/>
+    </delete>
+
+    <delete id="deleteByMeetingIdAndInviteUserId">
+        delete from meeting_reserve_member where meeting_id = #{meetingId} and invite_user_id = #{inviteUserId}
+    </delete>
+
+</mapper>
+
