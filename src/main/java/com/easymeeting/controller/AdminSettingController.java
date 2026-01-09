@@ -4,7 +4,6 @@ import com.easymeeting.annotation.GlobalInterceptor;
 import com.easymeeting.entity.dto.SysSettingDto;
 import com.easymeeting.entity.vo.ResponseVO;
 import com.easymeeting.redis.RedisComponent;
-import com.sun.org.apache.xml.internal.security.algorithms.implementations.SignatureECDSA;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestMapping;

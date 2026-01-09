@@ -21,6 +21,6 @@ public class RedisConfig<V> {
         template.setHashValueSerializer(RedisSerializer.json());
         template.afterPropertiesSet();
         return template;
-    }
+     }
 
 }

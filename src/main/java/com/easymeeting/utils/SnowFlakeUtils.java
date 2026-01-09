@@ -1,7 +1,7 @@
 package com.easymeeting.utils;
 
 /**
- * 雪花算法 ID 生成器，默认 5 位机房 + 5 位机器 + 12 位序列。
+ * 雪花算法 ID 生成器
  */
 public class SnowFlakeUtils {
 

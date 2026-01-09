@@ -38,7 +38,7 @@
         <commons.io.version>2.5</commons.io.version>
         <captcha.verion>1.6.2</captcha.verion>
         <netty.version>4.1.50.Final</netty.version>
-        <redisson.version>3.12.3</redisson.version>
+        <redisson.version>3.23.5</redisson.version>
         <lombok.version>1.18.30</lombok.version>
         <rabbitmq.version>5.14.2</rabbitmq.version>
     </properties>
@@ -168,11 +168,6 @@
             <groupId>com.rabbitmq</groupId>
             <artifactId>amqp-client</artifactId>
             <version>${rabbitmq.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-beans</artifactId>
-            <version>6.1.8</version>
         </dependency>
 
     </dependencies>

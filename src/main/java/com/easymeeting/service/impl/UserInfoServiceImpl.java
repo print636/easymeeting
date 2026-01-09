@@ -140,24 +140,29 @@ public class UserInfoServiceImpl implements UserInfoService {
         userInfo.setMeetingNo(StringTools.getMeetingNoOrMeetingId());
         userInfo.setStatus(UserStatusEnum.ENABLE.getStatus());
         this.userInfoMapper.insert(userInfo);
-
     }
 
     @Override
     public UserInfoVO login(String email, String password) {
-
         UserInfo userInfo = this.userInfoMapper.selectByEmail(email);
 
-        if(null == userInfo || !userInfo.getPassword().equals(password)){
+        if(null == userInfo || !userInfo.getPassword().equals(StringTools.encodeByMD5(password))){
             throw new BusinessException("账号或密码错误");
         }
         if(UserStatusEnum.DISABLE.getStatus().equals(userInfo.getStatus())){
             throw new BusinessException("账号已被禁用");
         }
 
+        // 检查是否已在别处登录
         if(userInfo.getLastLoginTime() != null && userInfo.getLastOffTime() <= userInfo.getLastLoginTime()){
             throw new BusinessException("此账号已在别处登录，请退出后再登录");
         }
+
+        // 更新登录时间
+        long now = System.currentTimeMillis();
+        UserInfo update = new UserInfo();
+        update.setLastLoginTime(now);
+        this.userInfoMapper.updateByUserId(update, userInfo.getUserId());
 
         TokenUserInfoDto tokenUserInfoDto = CopyTools.copy(userInfo, TokenUserInfoDto.class);
 
